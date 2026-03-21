@@ -153,7 +153,13 @@ export default function TrackingPage() {
                        <div className="mt-6 space-y-3">
                           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Proof of Delivery Photo</span>
                           <div className="rounded-2xl overflow-hidden border border-white/10 shadow-lg">
-                             <img src={`${process.env.NEXT_PUBLIC_API_URL}${shipmentData.pod_photo}`} alt="Delivery Proof" className="w-full h-auto object-cover max-h-64" />
+                                           <img
+                                              src={shipmentData.pod_photo.startsWith("data:") || shipmentData.pod_photo.startsWith("http")
+                                                 ? shipmentData.pod_photo
+                                                 : `${process.env.NEXT_PUBLIC_API_URL}${shipmentData.pod_photo}`}
+                                              alt="Delivery Proof"
+                                              className="w-full h-auto object-cover max-h-64"
+                                           />
                           </div>
                        </div>
                     )}

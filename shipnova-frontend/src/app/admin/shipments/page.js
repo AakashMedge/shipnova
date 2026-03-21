@@ -136,8 +136,17 @@ function ShipmentDetailModal({ shipmentId, onClose }) {
       }))
     : [];
 
-  const podUrl = data?.proofOfDelivery ? `${BACKEND}${data.proofOfDelivery}` : null;
-  const popUrl = data?.proofOfPickup ? `${BACKEND}${data.proofOfPickup}` : null;
+  const podUrl = data?.proofOfDelivery
+    ? (data.proofOfDelivery.startsWith("data:") || data.proofOfDelivery.startsWith("http")
+        ? data.proofOfDelivery
+        : `${BACKEND}${data.proofOfDelivery}`)
+    : null;
+
+  const popUrl = data?.proofOfPickup
+    ? (data.proofOfPickup.startsWith("data:") || data.proofOfPickup.startsWith("http")
+        ? data.proofOfPickup
+        : `${BACKEND}${data.proofOfPickup}`)
+    : null;
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-60 flex items-center justify-center p-4">

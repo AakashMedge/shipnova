@@ -235,7 +235,9 @@ exports.trackShipment = async (req, res) => {
       delivery_otp: shipment.deliveryOTP,
       otp_verified: shipment.otpVerified,
       pod_photo: shipment.proofOfDelivery
-        ? `${process.env.BACKEND_URL || "http://localhost:5000"}${shipment.proofOfDelivery}`
+        ? (shipment.proofOfDelivery.startsWith("data:") || shipment.proofOfDelivery.startsWith("http")
+            ? shipment.proofOfDelivery
+            : `${process.env.BACKEND_URL || "http://localhost:5000"}${shipment.proofOfDelivery}`)
         : null,
       agent: shipment.agent,
       customer: {

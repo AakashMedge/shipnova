@@ -4,18 +4,8 @@ const multer = require("multer");
 const path = require("path");
 const { protect, authorize } = require("../middleware/authMiddleware");
 
-// Setup storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/pod/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, `POD-${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`);
-  },
-});
-
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png/;
@@ -36,11 +26,14 @@ router.post("/pod", protect, authorize("Agent", "Hub Manager", "Company Admin"),
   if (!req.file) {
     return res.status(400).json({ message: "No image uploaded" });
   }
-  
-  // Return the relative URL to the image
+
+  const mimeType = req.file.mimetype || "image/jpeg";
+  const base64Image = req.file.buffer.toString("base64");
+  const imageDataUrl = `data:${mimeType};base64,${base64Image}`;
+
   res.json({
     message: "Image uploaded successfully",
-    imageUrl: `/uploads/pod/${req.file.filename}`,
+    imageUrl: imageDataUrl,
   });
 });
 
