@@ -1,10 +1,10 @@
 const nodemailer = require("nodemailer");
 
 const sendEmail = async (options) => {
-  // Use a default service, or environment variables
-  // SMTP setup is required. For testing/MVP, ethereal or a basic gmail account is fine.
-  // We'll scaffold it safely using recommended assessment patterns.
-  
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error("SMTP credentials are missing. Set EMAIL_USER and EMAIL_PASS.");
+  }
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -24,8 +24,10 @@ const sendEmail = async (options) => {
   try {
     const info = await transporter.sendMail(message);
     console.log("Email sent: %s", info.messageId);
+    return info;
   } catch (err) {
     console.error("Error sending email:", err);
+    throw err;
   }
 };
 

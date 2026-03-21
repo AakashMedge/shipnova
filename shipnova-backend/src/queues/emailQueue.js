@@ -36,15 +36,15 @@ emailQueue.on("error", (err) => {
  * Falls back to direct send if queue is unavailable.
  */
 const queueEmail = async (emailData) => {
-  // Bypassing Redis (Bull Queue) entirely for local Windows development because Redis isn't running.
-  // Instead of queueing, we fire the email immediately in the background asynchronously.
+  // In serverless environments, fire-and-forget can get cut off when the request ends.
+  // Await direct send so production email delivery is reliable.
   try {
-    console.log(`🚀 Attempting to send email directly to ${emailData.email}...`);
-    sendEmail(emailData).catch(err => {
-      console.error("❌ Background Email Direct Send Failed:", err.message);
-    });
+    console.log(`Attempting to send email to ${emailData.email}...`);
+    await sendEmail(emailData);
+    return true;
   } catch (err) {
-    console.error("❌ Email trigger failed:", err.message);
+    console.error("Email send failed:", err.message);
+    return false;
   }
 };
 

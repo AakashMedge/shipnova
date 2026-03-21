@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { Building2, Truck, ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://shipnova-backend.vercel.app/api";
+
 // ─── Role Definitions ─────────────────────────────────────────────────────────
 const ROLES = [
   {
@@ -164,14 +166,18 @@ export default function LoginGateway() {
     try {
       let data;
       if (mode === "login") {
-        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-          email: formData.email, password: formData.password,
-        });
+        const res = await axios.post(
+          `${API_BASE_URL}/auth/login`,
+          { email: formData.email, password: formData.password },
+          { timeout: 15000 }
+        );
         data = res.data;
       } else {
-        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
-          name: formData.name, email: formData.email, password: formData.password, role: "Customer",
-        });
+        const res = await axios.post(
+          `${API_BASE_URL}/auth/register`,
+          { name: formData.name, email: formData.email, password: formData.password, role: "Customer" },
+          { timeout: 15000 }
+        );
         data = res.data;
       }
       localStorage.setItem("userToken", data.token);
@@ -181,7 +187,11 @@ export default function LoginGateway() {
       else if (data.role === "Hub Manager") router.push("/hub-manager");
       else router.push("/dashboard");
     } catch (err) {
-      const rawMsg = err.response?.data?.message || "Network error";
+      const rawMsg =
+        err.response?.data?.message ||
+        (err.code === "ECONNABORTED"
+          ? "Request timed out. Please try again."
+          : `Unable to reach API at ${API_BASE_URL}`);
       const mapped = mapError(rawMsg);
       triggerShake();
       if (mapped === "ACCOUNT_EXISTS") {

@@ -51,7 +51,7 @@ exports.createShipment = async (req, res) => {
       details: `${shipment.customerName} (${shipment.customerEmail})`
     });
 
-    queueEmail({
+    await queueEmail({
       email: shipment.customerEmail,
       subject: "Your Shipnova Tracking ID",
       message: `Hello ${shipment.customerName},\n\nTrackingID: ${shipment.trackingId}\n\nAI INSIGHTS:\n${aiInsights}\n\nTrack: http://localhost:3000/track`
@@ -180,7 +180,7 @@ exports.updateStatus = async (req, res) => {
     }
     emailMsg += `\nTrack: ${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/track`;
 
-    queueEmail({
+    await queueEmail({
       email: shipment.customerEmail,
       subject: `Shipment Update: ${status}`,
       message: emailMsg
@@ -527,7 +527,7 @@ exports.bulkUpdateStatus = async (req, res) => {
       }
       emailMsg += `\n\nTrack your package: ${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/track`;
 
-      queueEmail({
+      await queueEmail({
         email: sh.customerEmail,
         subject: `Shipnova Update: Your package is now "${status}"`,
         message: emailMsg
@@ -585,7 +585,7 @@ exports.updateShipmentDetails = async (req, res) => {
 
     // If Admin requested a resend (e.g. wrong email typo was fixed)
     if (resendEmail) {
-      queueEmail({
+      await queueEmail({
         email: shipment.customerEmail,
         subject: "Your UPDATED Shipnova Tracking ID",
         message: `Hello ${shipment.customerName},\n\nThe logistical details for your shipment have been updated by ShipNova processing.\n\nYour Tracking ID remains: ${shipment.trackingId}\n\nYou can track it here: ${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/track`

@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://shipnova-backend.vercel.app/api";
+
 export default function SuperAdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,14 +36,20 @@ export default function SuperAdminLoginPage() {
     setIsLoading(true);
     try {
       const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/super-admin/login`,
-        { email, password }
+        `${API_BASE_URL}/super-admin/login`,
+        { email, password },
+        { timeout: 15000 }
       );
       localStorage.setItem("userToken", data.token);
       localStorage.setItem("userInfo", JSON.stringify(data));
       router.push("/super-admin");
     } catch (err) {
-      setError(err.response?.data?.message || "Authentication failed");
+      const msg =
+        err.response?.data?.message ||
+        (err.code === "ECONNABORTED"
+          ? "Request timed out. Please try again."
+          : `Unable to reach API at ${API_BASE_URL}`);
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
