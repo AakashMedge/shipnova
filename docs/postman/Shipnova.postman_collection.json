@@ -1,0 +1,118 @@
+{
+  "info": {
+    "name": "Shipnova API",
+    "description": "Courier Tracking SaaS API collection for assessment submission.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "token", "value": "" },
+    { "key": "trackingId", "value": "SN-00000000" },
+    { "key": "shipmentId", "value": "" },
+    { "key": "hubId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"superadmin@shipnova.com\",\n  \"password\": \"SuperAdmin@123\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Shipments - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/shipments",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerName\": \"Test Customer\",\n  \"customerEmail\": \"customer@example.com\",\n  \"address\": \"123 Example Street\",\n  \"phoneNumber\": \"9999999999\",\n  \"packageDetails\": \"Documents\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Shipments - Get By ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/shipments/{{shipmentId}}"
+      }
+    },
+    {
+      "name": "Track - Assessment Alias",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/track/{{trackingId}}"
+      }
+    },
+    {
+      "name": "Shipments - Update Status",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/shipments/{{shipmentId}}/status",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"In Transit\",\n  \"message\": \"Moved to linehaul\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Shipments - Assign Agent",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/shipments/{{shipmentId}}/assign-agent",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"agentId\": \"<agent_mongo_id>\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Hub Chat - Get Messages",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/hubs/{{hubId}}/chat"
+      }
+    },
+    {
+      "name": "Hub Chat - Send Message",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/hubs/{{hubId}}/chat",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Hello from admin\"\n}"
+        }
+      }
+    }
+  ]
+}
