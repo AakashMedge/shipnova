@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fdfdfd;
+  --foreground: #1a1a1a;
+  --accent-pink: #ff3399;
+  --accent-blue: #2d66ff;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png"); /* Subtle paper texture like the image */
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+@layer utilities {
+  .font-heavy {
+    font-weight: 1000;
+    text-transform: uppercase;
+    line-height: 0.82;
+    letter-spacing: -0.06em;
+    font-family: 'Inter', sans-serif;
+    font-stretch: extra-condensed;
+  }
+
+  .badge-blue {
+    background: var(--accent-blue);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 800;
+    transform: rotate(-12deg);
+    box-shadow: 0 4px 10px rgba(45, 102, 255, 0.3);
+  }
+
+  .pink-scribble {
+    position: absolute;
+    width: 25vw;
+    height: 15vw;
+    right: -2vw;
+    bottom: 2vw;
+    pointer-events: none;
+    z-index: 20;
+  }
+}
