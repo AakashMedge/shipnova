@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function LandingPage() {
   const textReveal = {
@@ -22,25 +23,25 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen relative flex flex-col items-center bg-[#fdfdfd] selection:bg-[#ff3399]/20 font-sans pb-0 overflow-x-hidden scroll-smooth">
+    <div className="min-h-screen relative flex flex-col items-center bg-[#fdfdfd] dark:bg-[#0a0a0a] text-black dark:text-white transition-colors duration-500 selection:bg-[#ff3399]/20 font-sans pb-0 overflow-x-hidden scroll-smooth">
       
       {/* --- Section 1: Navigation Header --- */}
-      <nav className="sticky top-0 left-0 w-full z-[100] px-8 py-6 flex justify-between items-center backdrop-blur-md bg-white/70 border-b border-black/5">
-         <div className="text-2xl font-black italic tracking-tighter flex items-center gap-2 group cursor-pointer">
-            <span className="bg-black text-white px-2 py-0.5 rounded-sm group-hover:bg-[#ff3399] transition-colors">S</span>
+      <nav className="sticky top-0 left-0 w-full z-[100] px-8 py-6 flex justify-between items-center backdrop-blur-md bg-white/70 dark:bg-[#0a0a0a]/70 border-b border-black/5 dark:border-white/5 transition-colors duration-500">
+         <div className="text-2xl font-black italic tracking-tighter flex items-center gap-2 group cursor-pointer dark:text-white">
+            <span className="bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 rounded-sm group-hover:bg-[#ff3399] dark:group-hover:bg-[#ff3399] dark:group-hover:text-white transition-colors">S</span>
             SHIPNOVA.
          </div>
          
-         <div className="hidden lg:flex gap-10 font-mono text-sm uppercase tracking-[0.2em] font-black text-black/60 items-center">
-            <motion.a whileHover={{ scale: 1.1 }} href="#logistics" className="hover:text-black transition-all relative group">
+         <div className="hidden lg:flex gap-10 font-mono text-sm uppercase tracking-[0.2em] font-black text-black/60 dark:text-white/60 items-center">
+            <motion.a whileHover={{ scale: 1.1 }} href="#logistics" className="hover:text-black dark:hover:text-white transition-all relative group">
                Logistics
                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#ff3399] group-hover:w-full transition-all duration-300"></span>
             </motion.a>
-            <motion.a whileHover={{ scale: 1.1 }} href="#network" className="hover:text-black transition-all relative group">
+            <motion.a whileHover={{ scale: 1.1 }} href="#network" className="hover:text-black dark:hover:text-white transition-all relative group">
                Network
                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#ff3399] group-hover:w-full transition-all duration-300"></span>
             </motion.a>
-            <motion.a whileHover={{ scale: 1.1 }} href="#team" className="hover:text-black transition-all relative group">
+            <motion.a whileHover={{ scale: 1.1 }} href="#team" className="hover:text-black dark:hover:text-white transition-all relative group">
                Team
                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#ff3399] group-hover:w-full transition-all duration-300"></span>
             </motion.a>
@@ -56,13 +57,15 @@ export default function LandingPage() {
          </div>
 
          <div className="flex gap-4 items-center">
+            <ThemeToggle />
+            
             <a href="/login">
-               <button className="hidden md:block text-[10px] font-black uppercase tracking-widest px-6 py-2.5 border-2 border-black hover:bg-black hover:text-white transition-all cursor-pointer">
+               <button className="hidden md:block text-[10px] font-black uppercase tracking-widest px-6 py-2.5 border-2 border-black dark:border-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black transition-all cursor-pointer">
                   LOGIN
                </button>
             </a>
             <a href="/register">
-               <button className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-black text-white shadow-[6px_6px_0_0_#ff3399] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] transition-all cursor-pointer">
+               <button className="text-[10px] font-black uppercase tracking-widest px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black shadow-[6px_6px_0_0_#ff3399] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] transition-all cursor-pointer">
                   GET STARTED
                </button>
             </a>
@@ -106,7 +109,7 @@ export default function LandingPage() {
         </div>
 
         {/* --- Right Side: Staggered Typographic Block --- */}
-        <div className="relative flex flex-col items-end text-black z-30 w-1/2">
+        <div className="relative flex flex-col items-end text-black dark:text-white z-30 w-1/2 transition-colors duration-500">
           
           {/* Row 1: SMARTER */}
           <div className="relative group">
@@ -254,7 +257,7 @@ export default function LandingPage() {
                  initial={{ opacity: 0, x: -30 }}
                  whileInView={{ opacity: 1, x: 0 }}
                  viewport={{ once: true }}
-                 className="text-[4rem] md:text-[6rem] font-heavy font-black italic tracking-tighter leading-none text-black"
+                 className="text-[4rem] md:text-[6rem] font-heavy font-black italic tracking-tighter leading-none text-black dark:text-white transition-colors duration-500"
                >
                   FUTURE OF<br/>FREIGHT.
                </motion.h2>
@@ -266,7 +269,7 @@ export default function LandingPage() {
                  initial={{ opacity: 0, y: 30 }}
                  whileInView={{ opacity: 1, y: 0 }}
                  viewport={{ once: true }}
-                 className="text-2xl md:text-3xl font-bold text-black/80 leading-relaxed"
+                 className="text-2xl md:text-3xl font-bold text-black/80 dark:text-white/80 transition-colors duration-500 leading-relaxed"
                >
                   After 
                   <span className="inline-block bg-[#ff3399]/15 border-[1.5px] border-[#ff3399] text-[#ff3399] text-xs font-black uppercase tracking-widest px-3 py-1 rounded-sm mx-2 -rotate-1 shadow-sm">2,000+ beta users</span> 
@@ -278,7 +281,7 @@ export default function LandingPage() {
                  whileInView={{ opacity: 1, y: 0 }}
                  viewport={{ once: true }}
                  transition={{ delay: 0.1 }}
-                 className="text-2xl md:text-3xl font-bold text-black/80 leading-relaxed"
+                 className="text-2xl md:text-3xl font-bold text-black/80 dark:text-white/80 transition-colors duration-500 leading-relaxed"
                >
                   But before we go full speed, we built the ultimate logistics dashboard — 
                   <span className="inline-block bg-[#ffee33] text-black text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-sm mx-2 italic shadow-md">because obviously.</span>
@@ -289,7 +292,7 @@ export default function LandingPage() {
                  whileInView={{ opacity: 1, y: 0 }}
                  viewport={{ once: true }}
                  transition={{ delay: 0.2 }}
-                 className="text-xl md:text-2xl font-semibold text-gray-500 leading-relaxed"
+                 className="text-xl md:text-2xl font-semibold text-gray-500 dark:text-gray-400 transition-colors duration-500 leading-relaxed"
                >
                   This is our (deeply optimized) solution for the global shipping community. From spreadsheets that defied logic to routes that deserved a standing ovation, thank you for making this era of shipping possible.
                </motion.div>
@@ -355,7 +358,7 @@ export default function LandingPage() {
                  initial={{ opacity: 0, scale: 0.9 }}
                  whileInView={{ opacity: 1, scale: 1 }}
                  viewport={{ once: true }}
-                 className="text-[4rem] md:text-[6rem] font-heavy font-black italic tracking-tighter leading-none text-black uppercase"
+                 className="text-[4rem] md:text-[6rem] font-heavy font-black italic tracking-tighter leading-none text-black dark:text-white transition-colors duration-500 uppercase"
                >
                   TO OUR<br/>TEAM.
                </motion.h2>
@@ -367,12 +370,12 @@ export default function LandingPage() {
                  initial={{ opacity: 0, y: 30 }}
                  whileInView={{ opacity: 1, y: 0 }}
                  viewport={{ once: true }}
-                 className="text-2xl md:text-3xl font-bold text-black/80 leading-relaxed"
+                 className="text-2xl md:text-3xl font-bold text-black/80 dark:text-white/80 transition-colors duration-500 leading-relaxed"
                >
                   Thank you for being the kind of teammates who made this more than just work.
                </motion.div>
 
-               <div className="text-xl md:text-2xl font-bold text-black/60 leading-relaxed">
+               <div className="text-xl md:text-2xl font-bold text-black/60 dark:text-white/60 transition-colors duration-500 leading-relaxed">
                   For every wild idea you said yes to, and every late-night route you helped shape — we're endlessly grateful. You taught us how to 
                   <span className="inline-block bg-[#ff3399] text-white text-[10px] md:text-xs font-black uppercase tracking-widest px-3 py-1 rounded-sm mx-2 shadow-lg">lead with heart</span> 
                   , 
@@ -387,7 +390,7 @@ export default function LandingPage() {
                  whileInView={{ opacity: 1, y: 0 }}
                  viewport={{ once: true }}
                  transition={{ delay: 0.3 }}
-                 className="text-xl md:text-2xl font-bold text-black italic"
+                 className="text-xl md:text-2xl font-bold text-black dark:text-white transition-colors duration-500 italic"
                >
                   We came to Shipnova to move freight. We stayed because of you.
                </motion.div>

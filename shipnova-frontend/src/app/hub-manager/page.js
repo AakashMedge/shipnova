@@ -8,6 +8,7 @@ import {
   QrCode, ShieldCheck, Truck, Eye
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import QrScannerModal from "@/components/QrScannerModal";
 
 export default function HubDashboard() {
   const [data, setData] = useState(null);
@@ -18,6 +19,7 @@ export default function HubDashboard() {
   const [qrData, setQrData] = useState(null);
   const [verifying, setVerifying] = useState(false);
   const [hubId, setHubId] = useState(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const fetchHubData = async () => {
     try {
@@ -63,20 +65,35 @@ export default function HubDashboard() {
     }
   };
 
-  // Verify and accept shipment
-  const verifyShipment = async (trackingId) => {
+  const handleScanShipment = async (decodedText) => {
+    setIsScannerOpen(false);
     setVerifying(true);
+    let trackingId;
+    try {
+      const payload = JSON.parse(decodedText);
+      trackingId = payload.trackingId || decodedText;
+    } catch {
+      trackingId = decodedText;
+    }
+
     try {
       const token = localStorage.getItem("userToken");
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/hubs/${hubId}/verify-shipment`, 
         { trackingId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      
+      // Look for the shipment they just scanned to update local UI feedback smoothly
+      const matchedShipment = incomingShipments.find(s => s.trackingId === trackingId);
+      if (matchedShipment) {
+         alert(`Success! ${matchedShipment.customerName}'s package verified.`);
+      } else {
+         alert(`Verified Package: ${trackingId}`);
+      }
+
       fetchHubData();
-      setSelectedShipment(null);
-      setQrData(null);
     } catch (err) {
-      alert(err.response?.data?.message || "Verification failed.");
+      alert(err.response?.data?.message || "Verification failed. Invalid package.");
     } finally {
       setVerifying(false);
     }
@@ -216,10 +233,10 @@ export default function HubDashboard() {
                       <QrCode className="size-3.5" /> View QR
                     </button>
                     <button 
-                      onClick={() => verifyShipment(s.trackingId)}
+                      onClick={() => setIsScannerOpen(true)}
                       className="flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"
                     >
-                      <ShieldCheck className="size-3.5" /> Verify & Accept
+                      <ShieldCheck className="size-3.5" /> Scan Label to Verify
                     </button>
                   </div>
                 </motion.div>
@@ -382,6 +399,15 @@ export default function HubDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* THE FORCED HARDWARE GATE: In-Page QR Verification Scanner */}
+      <QrScannerModal 
+        isOpen={isScannerOpen} 
+        onClose={() => setIsScannerOpen(false)} 
+        onScanSuccess={handleScanShipment} 
+        title="Inbound Security Scan"
+        hint="Point camera at the printed physical Admin QR label."
+      />
 
     </motion.div>
   );

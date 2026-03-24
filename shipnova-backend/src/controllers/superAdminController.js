@@ -117,13 +117,17 @@ exports.approveAdmin = async (req, res) => {
       return res.status(400).json({ message: "Admin is already approved" });
     }
 
-    // Auto-create a Tenant for this admin to ensure data isolation
-    const tenant = await createUniqueTenant(admin.name);
+    // Auto-create a Tenant for this admin only if they don't already have one from registration
+    let finalTenantId = admin.tenant_id;
+    if (!finalTenantId) {
+      const tenant = await createUniqueTenant(admin.name);
+      finalTenantId = tenant._id;
+    }
 
     admin.status = "active";
     admin.approvedBy = req.user._id;
     admin.approvedAt = new Date();
-    admin.tenant_id = tenant._id; // Enforce Multi-tenancy!
+    admin.tenant_id = finalTenantId; // Enforce Multi-tenancy!
     await admin.save();
 
     res.json({

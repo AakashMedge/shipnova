@@ -42,8 +42,7 @@ export default function HubManagerLayout({ children }) {
 
   const navItems = [
     { id: "live-terminal", name: "Live Terminal", icon: LayoutDashboard, href: "/hub-manager" },
-    { id: "floor-inventory", name: "Floor Inventory", icon: Box, href: "/hub-manager" },
-    { id: "agent-handover", name: "Agent Handover", icon: Truck, href: "/hub-manager/scan" },
+    { id: "inbound-scanner", name: "Inbound Scanner", icon: Scan, href: "/hub-manager/scan" },
     { id: "field-force", name: "Field Force", icon: Users, href: "/hub-manager/agents" },
     { id: "hub-chat", name: "Hub Chat", icon: MessageSquare, href: "/hub-manager/chat" },
   ];

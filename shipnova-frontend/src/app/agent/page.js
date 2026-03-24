@@ -21,6 +21,10 @@ export default function AgentMobileApp() {
 
   // ── Modals State ────────────────────────────────────────────────────────────
   
+  // 0. Batch Scanner Mode
+  const [batchMode, setBatchMode] = useState(false);
+  const [scannedTrackingIds, setScannedTrackingIds] = useState([]);
+
   // 1. Pickup From Hub Modal
   const [pickupModal, setPickupModal] = useState({ open: false, shipment: null, step: 1 });
   const [hubInput, setHubInput] = useState("");
@@ -96,6 +100,7 @@ export default function AgentMobileApp() {
   // ── PHASE A: PICKUP FLOW ────────────────────────────────────────────────────
   
   const handleQrScan = async (decodedText) => {
+    const currentMode = qrScanner.mode;
     setQrScanner({ open: false, mode: null });
     try {
       let payload;
@@ -103,8 +108,46 @@ export default function AgentMobileApp() {
       catch { payload = { raw: decodedText }; }
       
       const hubCode = payload.hubCode || payload.raw || decodedText;
-      verifyHubCode(hubCode.toUpperCase());
+      
+      if (currentMode === "hub-batch") {
+         await verifyAndLoadBatch(hubCode.toUpperCase());
+      } else {
+         verifyHubCode(hubCode.toUpperCase());
+      }
     } catch (e) { console.error("QR parse error:", e); }
+  };
+
+  const verifyAndLoadBatch = async (hubCode) => {
+    try {
+      const token = localStorage.getItem("userToken");
+      
+      // Get all active shipments that aren't Out for Delivery yet
+      const pendingIds = shipments.filter(s => s.status !== "Out for Delivery" && s.status !== "Delivered" && s.status !== "Failed / Retry / Returned").map(s => s.trackingId);
+      
+      if (pendingIds.length === 0) return alert("No packages to load.");
+
+      // 1. Secure Authorized Bulk push
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_URL}/shipments/bulk/status`,
+        { trackingIds: pendingIds, status: "Out for Delivery", message: "Batch loading verified via Hub Handshake", hubCode: hubCode },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // 2. Fetch driver coordinates globally
+      const { lat, lng } = await getGPS();
+
+      // 3. Trigger Route Optimizer globally
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/shipments/optimize-route`,
+        { currentLat: lat, currentLng: lng },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("Handshake Confirmed! Packages loaded securely and Route Optimized.");
+      setShipments(response.data.route);
+    } catch (e) {
+      alert(`Handshake Failed: ${e.response?.data?.message || "Invalid Hub Code or API Error."}`);
+    }
   };
 
   const verifyHubCode = async (code) => {
@@ -281,6 +324,34 @@ export default function AgentMobileApp() {
                 </p>
               </div>
             </div>
+
+            {/* BATCH LOADING FEATURE 2: Strict Handshake */}
+            {active.some(s => s.status !== "Out for Delivery") && (
+              <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 p-6 rounded-[32px] shadow-xl shadow-indigo-600/20 mb-6 text-white relative overflow-hidden">
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-4 backdrop-blur-md shadow-inner">
+                     <Package className="w-6 h-6 text-white drop-shadow-md" />
+                  </div>
+                  <h3 className="font-black text-xl tracking-tight mb-1.5 drop-shadow-sm">Ready to hit the road?</h3>
+                  <p className="text-[11px] font-medium text-indigo-100/90 leading-relaxed mb-6 px-2">
+                    Start your shift by scanning the Hub QR to securely transfer custody and auto-optimize your route.
+                  </p>
+                  <button
+                    onClick={() => {
+                      if(!confirm("Start Shift: To load pending deliveries onto your truck, you must scan the Hub Authorization QR.")) return;
+                      setBatchMode(true);
+                      setQrScanner({ open: true, mode: "hub-batch" });
+                    }}
+                    className="bg-white text-indigo-700 w-full py-4 rounded-[20px] font-black uppercase text-[11px] tracking-widest active:scale-95 transition-all shadow-[0_4px_15px_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] flex justify-center items-center gap-2"
+                  >
+                    Scan QR & Load Truck <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+                {/* Background Decoration */}
+                <Package className="absolute -bottom-6 -right-6 w-40 h-40 text-indigo-800 opacity-30 -rotate-12 pointer-events-none" />
+                <div className="absolute -top-10 -left-10 w-32 h-32 bg-white rounded-full opacity-5 blur-3xl pointer-events-none" />
+              </div>
+            )}
 
             {active.length === 0 ? (
               <div className="py-20 flex flex-col items-center opacity-40">

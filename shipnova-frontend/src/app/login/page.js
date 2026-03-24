@@ -6,6 +6,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Building2, Truck, ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://shipnova-backend.vercel.app/api";
 
@@ -83,7 +84,7 @@ const shakeVariant = {
 function FormField({ id, label, type, value, onChange, placeholder, error, rightEl }) {
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-black/55 ml-1">
+      <label htmlFor={id} className="font-mono text-[10px] font-black uppercase tracking-[0.3em] text-black/55 dark:text-white/55 transition-colors duration-500 ml-1">
         {label}
       </label>
       <div className="relative">
@@ -94,8 +95,8 @@ function FormField({ id, label, type, value, onChange, placeholder, error, right
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className={`w-full bg-white border-2 rounded-xl px-5 py-4 pr-14 text-black font-bold outline-none transition-all placeholder:text-black/30 text-sm
-            ${error ? "border-red-500 bg-red-50/60" : "border-black/20 focus:border-black focus:shadow-[4px_4px_0_0_#2d66ff]"}`}
+          className={`w-full bg-white dark:bg-[#111] border-2 rounded-xl px-5 py-4 pr-14 text-black dark:text-white font-bold outline-none transition-all placeholder:text-black/30 dark:placeholder:text-white/30 text-sm
+            ${error ? "border-red-500 bg-red-50/60" : "border-black/20 dark:border-white/20 focus:border-black dark:focus:border-white focus:shadow-[4px_4px_0_0_#2d66ff]"}`}
         />
         {rightEl && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2">{rightEl}</div>
@@ -232,7 +233,8 @@ export default function LoginGateway() {
 
   // ══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen relative bg-[#fdfdfd] flex items-center justify-center p-4 md:p-8 font-sans selection:bg-[#ff3399]/20 overflow-hidden">
+    <div className="min-h-screen relative bg-[#fdfdfd] dark:bg-[#0a0a0a] transition-colors duration-500 flex items-center justify-center p-4 md:p-8 font-sans selection:bg-[#ff3399]/20 overflow-hidden">
+      <div className="absolute top-6 right-8 z-50"><ThemeToggle /></div>
       <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/natural-paper.png')" }} />
       <div className="fixed -top-40 -right-40 w-96 h-96 bg-[#ff3399]/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="fixed -bottom-40 -left-40 w-96 h-96 bg-[#2d66ff]/10 rounded-full blur-[120px] pointer-events-none" />
@@ -250,13 +252,13 @@ export default function LoginGateway() {
             >
               <div className="text-center mb-16">
                 <Link href="/" className="inline-flex items-center gap-2 mb-8 group">
-                  <div className="w-8 h-8 bg-black text-white rounded-sm flex items-center justify-center group-hover:bg-[#ff3399] transition-colors">
+                  <div className="w-8 h-8 bg-black dark:bg-white text-white dark:text-black rounded-sm flex items-center justify-center group-hover:bg-[#ff3399] dark:group-hover:bg-[#ff3399] dark:group-hover:text-white transition-colors">
                     <span className="font-black italic text-lg leading-none">S</span>
                   </div>
-                  <span className="text-xl font-black italic tracking-tighter text-black">SHIPNOVA.</span>
+                  <span className="text-xl font-black italic tracking-tighter text-black dark:text-white transition-colors">SHIPNOVA.</span>
                 </Link>
-                <h1 className="text-5xl md:text-7xl font-heavy italic text-black mb-4">Welcome Back</h1>
-                <p className="font-mono text-xs md:text-sm uppercase tracking-[0.2em] text-black/50">Select your portal to continue</p>
+                <h1 className="text-5xl md:text-7xl font-heavy italic text-black dark:text-white transition-colors mb-4">Welcome Back</h1>
+                <p className="font-mono text-xs md:text-sm uppercase tracking-[0.2em] text-black/50 dark:text-white/50 transition-colors">Select your portal to continue</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -266,22 +268,22 @@ export default function LoginGateway() {
                     initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
                     onClick={() => setSelectedRole(role.id)}
-                    className={`group relative bg-white border-4 border-black rounded-2xl p-8 text-left transition-all duration-300 overflow-hidden ${role.cardShadow} hover:shadow-none hover:translate-x-2.5 hover:translate-y-2.5`}
+                    className={`group relative bg-white dark:bg-[#111] border-4 border-black dark:border-white/10 rounded-2xl p-8 text-left transition-all duration-300 overflow-hidden ${role.cardShadow} hover:shadow-none hover:translate-x-2.5 hover:translate-y-2.5`}
                   >
                     <div className="absolute inset-0 bg-linear-to-br from-black/1.5 to-transparent pointer-events-none" />
                     <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 border-2 ${role.pill}`}>
                       <role.icon className="w-7 h-7" />
                     </div>
                     <div className="mb-4">
-                      <span className="font-mono text-[9px] font-black uppercase tracking-[0.25em] text-black/50">{role.tagline}</span>
+                      <span className="font-mono text-[9px] font-black uppercase tracking-[0.25em] text-black/50 dark:text-white/50">{role.tagline}</span>
                     </div>
-                    <h3 className="text-4xl md:text-[2.6rem] font-black italic tracking-tighter text-black mt-2 mb-2 leading-none group-hover:text-[#ff3399] transition-colors">{role.label}</h3>
-                    <p className="text-black/60 text-sm font-bold leading-relaxed mb-8">{role.subtitle}</p>
+                    <h3 className="text-4xl md:text-[2.6rem] font-black italic tracking-tighter text-black dark:text-white mt-2 mb-2 leading-none group-hover:text-[#ff3399] dark:group-hover:text-[#ff3399] transition-colors">{role.label}</h3>
+                    <p className="text-black/60 dark:text-white/60 text-sm font-bold leading-relaxed mb-8 transition-colors">{role.subtitle}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-black/35">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-black/35 dark:text-white/40">
                         {role.canRegister ? "Login or Register" : "Login Only"}
                       </span>
-                      <div className="w-10 h-10 border-2 border-black rounded-xl flex items-center justify-center text-black group-hover:bg-black group-hover:text-white transition-all duration-300">
+                      <div className="w-10 h-10 border-2 border-black dark:border-white/30 rounded-xl flex items-center justify-center text-black dark:text-white group-hover:bg-black dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all duration-300">
                         <ArrowRight className="w-4 h-4" />
                       </div>
                     </div>
@@ -315,7 +317,7 @@ export default function LoginGateway() {
               transition={{ duration: 0.35 }}
               className="max-w-md mx-auto"
             >
-              <button onClick={handleBack} className="flex items-center gap-2 text-black/50 hover:text-black transition-colors mb-8 font-mono font-black uppercase tracking-[0.2em] text-[11px] group">
+              <button onClick={handleBack} className="flex items-center gap-2 text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors mb-8 font-mono font-black uppercase tracking-[0.2em] text-[11px] group">
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                 All Portals
               </button>
@@ -323,25 +325,25 @@ export default function LoginGateway() {
               <motion.div
                 animate={isShaking ? "shake" : "idle"}
                 variants={shakeVariant}
-                className={`bg-white border-4 border-black rounded-2xl p-8 md:p-10 ${currentRole.cardShadow}`}
+                className={`bg-white dark:bg-[#111] border-4 border-black dark:border-white/10 rounded-2xl p-8 md:p-10 transition-colors duration-500 ${currentRole.cardShadow}`}
               >
                 {/* Header */}
-                <div className="flex items-center gap-4 mb-8 pb-6 border-b-2 border-black/10">
+                <div className="flex items-center gap-4 mb-8 pb-6 border-b-2 border-black/10 dark:border-white/10">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 ${currentRole.pill}`}>
                     <currentRole.icon className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-mono text-[9px] font-black uppercase tracking-[0.25em] text-black/50">{currentRole.tagline}</p>
-                    <h2 className="text-3xl font-black italic tracking-tighter text-black leading-none mt-2">{currentRole.label}</h2>
+                    <p className="font-mono text-[9px] font-black uppercase tracking-[0.25em] text-black/50 dark:text-white/50">{currentRole.tagline}</p>
+                    <h2 className="text-3xl font-black italic tracking-tighter text-black dark:text-white leading-none mt-2">{currentRole.label}</h2>
                   </div>
                 </div>
 
                 {/* Mode toggle (Customer only) */}
                 {currentRole.canRegister && (
-                  <div className="flex bg-black/5 border-2 border-black/15 p-1.5 rounded-xl mb-8">
+                  <div className="flex bg-black/5 dark:bg-white/5 border-2 border-black/15 dark:border-white/15 p-1.5 rounded-xl mb-8">
                     {["login", "register"].map((m) => (
                       <button key={m} onClick={() => switchMode(m)}
-                        className={`flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${mode === m ? "bg-black text-white" : "text-black/45 hover:text-black"}`}>
+                        className={`flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${mode === m ? "bg-black dark:bg-white text-white dark:text-black" : "text-black/45 dark:text-white/45 hover:text-black dark:hover:text-white"}`}>
                         {m}
                       </button>
                     ))}
@@ -367,7 +369,7 @@ export default function LoginGateway() {
                     value={formData.password} onChange={handlePasswordChange}
                     placeholder="••••••••" error={errors.password}
                     rightEl={
-                      <button type="button" onClick={() => setShowPass(!showPass)} className="text-black/35 hover:text-black transition-colors">
+                      <button type="button" onClick={() => setShowPass(!showPass)} className="text-black/35 dark:text-white/35 hover:text-black dark:hover:text-white transition-colors">
                         {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     }
@@ -377,7 +379,7 @@ export default function LoginGateway() {
                   <AnimatePresence>
                     {mode === "register" && formData.password && passwordStrength && (
                       <motion.div key="strength" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-1.5 overflow-hidden">
-                        <div className="w-full bg-slate-100 rounded-full h-1.5">
+                        <div className="w-full bg-slate-100 dark:bg-white/10 rounded-full h-1.5">
                           <motion.div className={`h-1.5 rounded-full ${passwordStrength.color} transition-all duration-500`} style={{ width: passwordStrength.pct }} />
                         </div>
                         <p className={`text-[10px] font-black uppercase tracking-[0.2em] ml-1 ${passwordStrength.textColor}`}>{passwordStrength.label} Password</p>
@@ -399,7 +401,7 @@ export default function LoginGateway() {
                               {formData.confirmPassword && formData.password === formData.confirmPassword && (
                                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                               )}
-                              <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="text-black/35 hover:text-black transition-colors">
+                              <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="text-black/35 dark:text-white/35 hover:text-black dark:hover:text-white transition-colors">
                                 {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                               </button>
                             </div>
@@ -439,14 +441,14 @@ export default function LoginGateway() {
                   </button>
                 </form>
 
-                <p className="text-center text-[10px] text-black/35 font-black uppercase tracking-[0.2em] mt-8 leading-relaxed">
+                <p className="text-center text-[10px] text-black/35 dark:text-white/35 font-black uppercase tracking-[0.2em] mt-8 leading-relaxed">
                   {mode === "login"
                     ? currentRole.canRegister ? "New here? Use the Register tab above." : "Accounts are provisioned by your company admin."
                     : "Already registered? Use the Login tab above."}
                 </p>
               </motion.div>
 
-              <p className="text-center text-[10px] text-black/35 font-black uppercase tracking-[0.2em] mt-8">
+              <p className="text-center text-[10px] text-black/35 dark:text-white/35 font-black uppercase tracking-[0.2em] mt-8">
                 Shipnova — Multi-Tenant Courier SaaS
               </p>
             </motion.div>

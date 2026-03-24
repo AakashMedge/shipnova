@@ -10,6 +10,7 @@ const {
   getAnalytics,
   verifyHub,
   bulkUpdateStatus,
+  optimizeRoute,
 } = require("../controllers/shipmentController");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const { trackingLimiter } = require("../middleware/rateLimiter");
@@ -39,6 +40,9 @@ router.patch("/bulk/status", protect, bulkStatusValidators, validate, bulkUpdate
 
 // Public tracking API (rate limited)
 router.get("/track/:trackingId", trackingLimiter, trackingIdParamValidator, validate, trackShipment);
+
+// Route Optimization (Feature 2)
+router.post("/optimize-route", protect, authorize("Agent"), optimizeRoute);
 
 // Universal Scanning Route (Supports Tracking ID as identifier)
 router.patch(

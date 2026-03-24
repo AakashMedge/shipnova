@@ -51,13 +51,32 @@ exports.createShipment = async (req, res) => {
       details: `${shipment.customerName} (${shipment.customerEmail})`
     });
 
+    const { getShipmentCreatedTemplate } = require("../utils/emailTemplates");
+    const sendSMS = require("../utils/sendSMS");
+    const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
+
+    // ── TRIGGER 1: Email Alert ───────────────────────────────────────────
     await queueEmail({
       email: shipment.customerEmail,
-      subject: "Your Shipnova Tracking ID",
-      message: `Hello ${shipment.customerName},\n\nTrackingID: ${shipment.trackingId}\n\nAI INSIGHTS:\n${aiInsights}\n\nTrack: http://localhost:3000/track`
+      subject: `[${shipment.trackingId}] ShipNova Induction Alert`,
+      html: getShipmentCreatedTemplate({
+        customerName: shipment.customerName,
+        trackingId: shipment.trackingId,
+        aiInsights: shipment.aiInsights,
+        trackingUrl: `${frontendUrl}/track?id=${shipment.trackingId}`
+      })
     });
 
+    // ── TRIGGER 1: SMS Alert ─────────────────────────────────────────────
+    if (shipment.phoneNumber) {
+      await sendSMS({
+        phoneNumber: shipment.phoneNumber,
+        message: `ShipNova Alert [${shipment.trackingId}]: Your package is booked! Track it here: ${frontendUrl}/track?id=${shipment.trackingId}`
+      });
+    }
+
     res.status(201).json(shipment);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -173,20 +192,38 @@ exports.updateStatus = async (req, res) => {
     await delCache(`track:${shipment.trackingId}`);
     await delCache(`analytics:${shipment.tenant_id}`);
 
-    let emailMsg = `Your shipment (${shipment.trackingId}) is now: ${status}\n`;
-    if (message) emailMsg += `Note: ${message}\n`;
-    if (status === "Out for Delivery") {
-      emailMsg += `\nOTP: ${shipment.deliveryOTP}\n`;
-    }
-    emailMsg += `\nTrack: ${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/track`;
+    const { getShipmentUpdateTemplate } = require("../utils/emailTemplates");
+    const sendSMS = require("../utils/sendSMS");
+    const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
 
+    // ── TRIGGER 2: Email Update ─────────────────────────────────────────
     await queueEmail({
       email: shipment.customerEmail,
-      subject: `Shipment Update: ${status}`,
-      message: emailMsg
+      subject: `Shipment Update [${shipment.trackingId}]: ${status}`,
+      html: getShipmentUpdateTemplate({
+        trackingId: shipment.trackingId,
+        status: status,
+        message: message,
+        otp: shipment.deliveryOTP,
+        proofOfDelivery: shipment.proofOfDelivery ? (shipment.proofOfDelivery.startsWith("http") ? shipment.proofOfDelivery : `${process.env.BACKEND_URL}${shipment.proofOfDelivery}`) : null,
+        trackingUrl: `${frontendUrl}/track?id=${shipment.trackingId}`
+      })
     });
 
+    // ── TRIGGER 2: SMS Update ───────────────────────────────────────────
+    if (shipment.phoneNumber) {
+      let smsMsg = `ShipNova: [${shipment.trackingId}] is now ${status}.`;
+      if (status === "Out for Delivery") {
+        smsMsg += ` Your PIN: ${shipment.deliveryOTP}. Keep it ready!`;
+      }
+      if (status === "Delivered") {
+        smsMsg += ` Thank you for choosing ShipNova!`;
+      }
+      await sendSMS({ phoneNumber: shipment.phoneNumber, message: smsMsg });
+    }
+
     res.json({ message: "Status updated", shipment });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -463,7 +500,7 @@ exports.verifyHub = async (req, res) => {
   try {
     const hub = await Hub.findOne({ hubCode });
     if (!hub) {
-      return res.status(404).json({ message: "Invalid Hub Scan. Check your location." });
+      return res.status(404).json({ message: "Invalid Hub Code entered. Please verify with the Hub Manager." });
     }
 
     res.json({ 
@@ -480,61 +517,109 @@ exports.verifyHub = async (req, res) => {
 // @route   PATCH /api/shipments/bulk/status
 // @access  Private (Agent / Admin)
 exports.bulkUpdateStatus = async (req, res) => {
-  const { trackingIds, status, message, hubId, proofOfPickup } = req.body;
+  const { trackingIds, status, message, hubId, hubCode, proofOfPickup } = req.body;
   
   try {
+    // STRONG BACKEND VALIDATION 1: Validate input
+    if (!trackingIds || !Array.isArray(trackingIds) || trackingIds.length === 0) {
+      return res.status(400).json({ message: "No shipments scanned to update." });
+    }
+
+    // STRONG BACKEND VALIDATION 2: If Agent is starting shift (Moving to Out for Delivery), they MUST provide a valid Hub Authorization
+    let verifiedHubId = hubId;
+    if (status === "Out for Delivery") {
+      if (!hubCode && !hubId) {
+        return res.status(401).json({ message: "Security Block: Hub Manager Authorization Code is required to load truck." });
+      }
+      if (hubCode) {
+        const Hub = require("../models/Hub");
+        const hub = await Hub.findOne({ hubCode: hubCode.toUpperCase() });
+        if (!hub) return res.status(404).json({ message: "Security Block: Invalid Hub Authorization Code." });
+        verifiedHubId = hub._id;
+      }
+    }
+
+    // Fetch the target shipments to validate their current state
+    const upperTrackingIds = trackingIds.map(id => id.toUpperCase());
+    const shipments = await Shipment.find({ trackingId: { $in: upperTrackingIds } });
+
+    if (shipments.length !== trackingIds.length) {
+      return res.status(400).json({ message: "Security Block: One or more scanned tracking IDs do not exist." });
+    }
+
+    // STRONG BACKEND VALIDATION 3: Status progression integrity (Chain of custody)
+    for (const s of shipments) {
+      if (req.user.role === "Agent" && s.agent && s.agent.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: `Security Block: You are not assigned to transport package ${s.trackingId}.` });
+      }
+      
+      // Before an agent can load it, the hub must have received it
+      if (status === "Out for Delivery" && s.status === "Created") {
+        return res.status(400).json({ message: `Security Block: Package ${s.trackingId} has not been received by the Hub yet.` });
+      }
+    }
+
     const updatePayload = {
-      $set: { status: status, hub: hubId || null },
+      $set: { status: status, hub: verifiedHubId || null },
       $push: { 
         history: {
           status: status,
-          message: message || `Bulk Status Update to ${status}`,
+          message: message || `Bulk Status Update to ${status} (Verified at Hub)`,
           updatedBy: req.user._id,
           timestamp: new Date()
         }
       }
     };
 
-    // If a pickup photo was provided, attach it to proofOfPickup
     if (proofOfPickup) {
       updatePayload.$set.proofOfPickup = proofOfPickup;
     }
 
     const results = await Shipment.updateMany(
-      { trackingId: { $in: trackingIds.map(id => id.toUpperCase()) } },
+      { trackingId: { $in: upperTrackingIds } },
       updatePayload
     );
 
-    // Create individual records in ShipmentEvent for history tracking compatibility
-    const shipments = await Shipment.find({ trackingId: { $in: trackingIds.map(id => id.toUpperCase()) } });
     const events = shipments.map(s => ({
       shipment: s._id,
       status,
-      message: message || `Bulk status update to ${status}`,
+      message: message || `Bulk Status Update to ${status} (Verified at Hub)`,
       updatedBy: req.user._id,
       tenant_id: s.tenant_id,
     }));
     await ShipmentEvent.insertMany(events);
 
-    // Invalidate caches and send emails
     for (const sh of shipments) {
       await delCache(`track:${sh.trackingId}`);
       await delCache(`analytics:${sh.tenant_id}`);
       
-      let emailMsg = `Hello ${sh.customerName},\n\nYour shipment (${sh.trackingId}) has been updated:\n\nStatus: ${status}\n${message ? `Note: ${message}\n` : ""}`;
-      if (status === "Out for Delivery") {
-        emailMsg += `\n\n**IMPORTANT SECURITY PIN**: Your secret delivery OTP is ${sh.deliveryOTP}.\nOur agent will ask for this 4-digit code when they arrive. Do not share it with anyone else.`;
-      }
-      emailMsg += `\n\nTrack your package: ${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/track`;
+      const { getShipmentUpdateTemplate } = require("../utils/emailTemplates");
+      const sendSMS = require("../utils/sendSMS");
+      const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
 
-      await queueEmail({
-        email: sh.customerEmail,
-        subject: `Shipnova Update: Your package is now "${status}"`,
-        message: emailMsg
+      // ── TRIGGER 3: Email Update (Bulk) ───────────────────────────────
+      await queueEmail({ 
+        email: sh.customerEmail, 
+        subject: `Shipment Update [${sh.trackingId}]: ${status}`, 
+        html: getShipmentUpdateTemplate({
+          trackingId: sh.trackingId,
+          status: status,
+          message: message,
+          otp: sh.deliveryOTP,
+          proofOfDelivery: sh.proofOfDelivery ? (sh.proofOfDelivery.startsWith("http") ? sh.proofOfDelivery : `${process.env.BACKEND_URL}${sh.proofOfDelivery}`) : null,
+          trackingUrl: `${frontendUrl}/track?id=${sh.trackingId}`
+        })
       });
+
+      // ── TRIGGER 3: SMS Update (Bulk) ─────────────────────────────────
+      if (sh.phoneNumber) {
+        let bulkSmsMsg = `ShipNova: [${sh.trackingId}] is now ${status}. ${status === 'Out for Delivery' ? 'OTP: ' + sh.deliveryOTP : ''}`;
+        await sendSMS({ phoneNumber: sh.phoneNumber, message: bulkSmsMsg });
+      }
     }
 
-    res.json({ message: `${results.modifiedCount} units updated.`, results });
+    res.json({ message: `${results.modifiedCount} packages securely transferred to your custody.`, results });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -585,15 +670,81 @@ exports.updateShipmentDetails = async (req, res) => {
 
     // If Admin requested a resend (e.g. wrong email typo was fixed)
     if (resendEmail) {
+      const { getShipmentCreatedTemplate } = require("../utils/emailTemplates");
+      const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
+
       await queueEmail({
         email: shipment.customerEmail,
-        subject: "Your UPDATED Shipnova Tracking ID",
-        message: `Hello ${shipment.customerName},\n\nThe logistical details for your shipment have been updated by ShipNova processing.\n\nYour Tracking ID remains: ${shipment.trackingId}\n\nYou can track it here: ${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/track`
+        subject: `[${shipment.trackingId}] ShipNova Induction Alert (Updated)`,
+        html: getShipmentCreatedTemplate({
+          customerName: shipment.customerName,
+          trackingId: shipment.trackingId,
+          aiInsights: "Your logistical details have been updated by ShipNova processing.",
+          trackingUrl: `${frontendUrl}/track?id=${shipment.trackingId}`
+        })
       });
     }
 
     res.json({ message: "Shipment details updated", shipment });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+const geolib = require("geolib");
+
+// @desc    Optimize Agent's Active Route using Nearest Neighbor (TSP)
+// @route   POST /api/shipments/optimize-route
+// @access  Private (Agent)
+exports.optimizeRoute = async (req, res) => {
+  const { currentLat, currentLng } = req.body;
+
+  try {
+    const pendingDeliveries = await Shipment.find({
+      agent: req.user._id,
+      status: "Out for Delivery"
+    });
+
+    if (pendingDeliveries.length === 0) {
+      return res.json({ message: "No active deliveries to optimize.", route: [] });
+    }
+
+    let unvisited = pendingDeliveries.map(s => {
+      // Create a plain object and guarantee numerical latitude/longitude for geolib
+      const sObj = s.toObject ? s.toObject() : s;
+      return {
+        ...sObj,
+        latitude: Number(s.currentLat) || 0,
+        longitude: Number(s.currentLong) || 0,
+      };
+    });
+
+    let currentLocation = { 
+      latitude: Number(currentLat) || 0, 
+      longitude: Number(currentLng) || 0 
+    };
+    
+    let optimizedRoute = [];
+
+    // Simple Greedy Traveling Salesperson
+    while (unvisited.length > 0) {
+      // Find the closest package
+      const nearest = geolib.findNearest(currentLocation, unvisited);
+      
+      optimizedRoute.push(nearest);
+      
+      currentLocation = { latitude: nearest.latitude, longitude: nearest.longitude };
+      
+      unvisited = unvisited.filter(s => s._id.toString() !== nearest._id.toString());
+    }
+
+    res.json({ 
+      message: "Route successfully optimized!", 
+      totalStops: optimizedRoute.length,
+      route: optimizedRoute 
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

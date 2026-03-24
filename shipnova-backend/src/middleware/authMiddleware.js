@@ -24,7 +24,14 @@ const protect = async (req, res, next) => {
       }
 
       // ── SYSTEM-WIDE SUSPENSION LOGIC ──
-      // If NOT a Super Admin, we must check if their Company/Tenant is active
+      // 1. Check if the specific user account is suspended
+      if (req.user.status === "suspended") {
+         return res.status(403).json({ 
+             message: "Your account has been suspended by System Administration. Contact support." 
+         });
+      }
+
+      // 2. If NOT a Super Admin, we must check if their Company/Tenant is active
       if (req.user.role !== "Super Admin" && req.user.tenant_id) {
          if (!req.user.tenant_id.isActive) {
             return res.status(403).json({ 

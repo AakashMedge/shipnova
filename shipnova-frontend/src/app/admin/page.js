@@ -87,7 +87,14 @@ export default function AdminDashboard() {
         });
         if (mounted) setData(res.data);
       } catch (err) {
-        console.error("Failed to fetch analytics", err);
+        if (err.response?.status === 403) {
+           alert("Your account has been suspended by System Administration. Please contact superadmin@shipnova.com for assistance.");
+           localStorage.removeItem("userToken");
+           localStorage.removeItem("userInfo");
+           window.location.href = "/login";
+        } else {
+           console.error("Failed to fetch analytics", err);
+        }
       } finally {
         if (mounted) setLoading(false);
       }

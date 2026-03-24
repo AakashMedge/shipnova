@@ -44,45 +44,69 @@ function AgentDetailModal({ agent, stats, onClose }) {
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white border border-black/10 rounded-2xl p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-black/40 mb-2">Contact</p>
-              <div className="space-y-2 text-sm font-bold text-black/75">
-                <p className="flex items-center gap-2"><Mail className="w-4 h-4 text-black/35" />{agent.email || "-"}</p>
-                <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-black/35" />{agent.phone || "Not added"}</p>
-                <p className="flex items-center gap-2"><MapPin className="w-4 h-4 text-black/35" />{agent.address || "Not added"}</p>
-              </div>
-            </div>
-
-            <div className="bg-white border border-black/10 rounded-2xl p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-black/40 mb-2">Performance</p>
-              <div className="space-y-2 text-sm font-bold text-black/80">
-                <p className="flex items-center justify-between"><span>Total Assigned</span><span>{stats.totalAssigned}</span></p>
-                <p className="flex items-center justify-between"><span>Delivered</span><span>{stats.delivered}</span></p>
-                <p className="flex items-center justify-between"><span>Active Orders</span><span>{stats.active}</span></p>
-                <p className="flex items-center justify-between"><span>Waiting at this Hub</span><span>{stats.waitingAtHub}</span></p>
-              </div>
-            </div>
+        <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+          {/* Performance KPIs (Feature 3) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+             <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-blue-800/60 mb-1">Total</p>
+                <p className="text-2xl font-black text-blue-900">{stats.totalAssigned}</p>
+             </div>
+             <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-emerald-800/60 mb-1">Delivered</p>
+                <p className="text-2xl font-black text-emerald-900">{stats.delivered}</p>
+             </div>
+             <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-red-800/60 mb-1">Failed</p>
+                <p className="text-2xl font-black text-red-900">{stats.failed}</p>
+             </div>
+             <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 text-center relative overflow-hidden">
+                <p className="text-[9px] font-black uppercase tracking-widest text-indigo-800/60 mb-1">Success</p>
+                <p className="text-2xl font-black text-indigo-900">{stats.completionRate}%</p>
+                <div className="absolute bottom-0 left-0 h-1.5 bg-indigo-500 transition-all" style={{ width: `${stats.completionRate}%` }} />
+             </div>
           </div>
 
-          <div className="bg-black/2 border border-black/10 rounded-2xl p-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-black/45 mb-3">Recent Deliveries</p>
-            {stats.recentDelivered.length === 0 ? (
-              <p className="text-sm text-black/45 font-bold">No delivered shipments yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {stats.recentDelivered.map((shipment) => (
-                  <div key={shipment._id} className="flex items-center justify-between text-sm border-b border-black/5 pb-2">
-                    <span className="font-mono font-black text-black/75">{shipment.trackingId}</span>
-                    <span className="font-bold text-black/50 truncate max-w-[45%]">{shipment.customerName}</span>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full">
-                      Delivered
-                    </span>
-                  </div>
-                ))}
+          <div className="grid grid-cols-1 gap-4">
+            {/* Contact Details */}
+            <div className="bg-white border border-black/10 rounded-2xl p-4 flex gap-4 items-center">
+              <div className="flex-1 space-y-1.5 text-xs font-bold text-black/75">
+                <p className="flex items-center gap-2"><Mail className="w-3.5 h-3.5 text-black/35" />{agent.email || "-"}</p>
+                <p className="flex items-center gap-2"><Phone className="w-3.5 h-3.5 text-black/35" />{agent.phone || "Not added"}</p>
               </div>
-            )}
+            </div>
+
+            {/* Chain of Custody Audit Log (Feature 1) */}
+            <div className="bg-black/2 border border-black/10 rounded-2xl p-5">
+              <div className="flex justify-between items-center mb-4">
+                 <p className="text-[10px] font-black uppercase tracking-[0.15em] text-black">Chain of Custody Log</p>
+                 <span className="text-[9px] font-bold text-black/40">Last 10 Actions</span>
+              </div>
+              
+              {stats.auditTrail.length === 0 ? (
+                <p className="text-xs text-black/45 font-bold py-4 text-center">No custody records found.</p>
+              ) : (
+                <div className="space-y-3 relative before:absolute before:inset-y-0 before:left-2 before:w-px before:bg-black/10">
+                  {stats.auditTrail.map((shipment) => (
+                    <div key={shipment._id} className="relative pl-6 flex justify-between items-center bg-white p-3 rounded-xl border border-black/5 shadow-sm">
+                      <div className="absolute left-[3.5px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-black ring-4 ring-white" />
+                      <div>
+                         <span className="font-mono font-black text-[10px] text-black/60 bg-black/5 px-2 py-0.5 rounded">{shipment.trackingId}</span>
+                         <p className="font-bold text-xs text-black mt-1">{shipment.status}</p>
+                         <p className="text-[9px] font-bold text-black/40 mt-0.5">{shipment.customerName}</p>
+                      </div>
+                      <div className="text-right">
+                         <p className="text-[10px] font-bold text-black/60">
+                           {new Date(shipment.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                         </p>
+                         <p className="text-[9px] font-bold text-black/30">
+                           {new Date(shipment.updatedAt).toLocaleDateString()}
+                         </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </motion.div>
@@ -142,16 +166,27 @@ export default function RegionalAgents() {
     agents.forEach((agent) => {
       const owned = shipments.filter((s) => s.agent?._id === agent._id);
       const delivered = owned.filter((s) => s.status === "Delivered");
+      const failed = owned.filter((s) => s.status === "Failed / Retry / Returned");
       const active = owned.filter((s) => !["Delivered", "Failed / Retry / Returned"].includes(s.status));
+      const completionRate = owned.length > 0 ? Math.round((delivered.length / owned.length) * 100) : 0;
+
+      // Extract Audit Trail automatically from shipment updates (Feature 1)
+      const auditTrail = [...owned]
+        .filter(s => s.updatedAt)
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .slice(0, 10); // Show last 10 custody events
 
       map[agent._id] = {
         totalAssigned: owned.length,
         delivered: delivered.length,
+        failed: failed.length,
         active: active.length,
+        completionRate,
         waitingAtHub: activeHandoverMap[agent._id] || 0,
         recentDelivered: [...delivered]
           .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
           .slice(0, 5),
+        auditTrail,
       };
     });
 
